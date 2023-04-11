@@ -27,18 +27,23 @@ def createJMX(domain, port, path, hasCounter=True):
     return
 
 
-def _getHashTree(jmx):
+def _getHashTree(jmx, N=20):
     ht = jmx.find("hashTree")
+    hashTree = None
     if ht is None:
         hashTree = ET.SubElement(jmx, "hashTree")
     else:
-        for i in range(20):
+        for i in range(N):
+            print(i)
             tmp = ht.find("hashTree")
             if tmp is None:
                 hashTree = ET.SubElement(ht, "hashTree")
                 break
             ht = tmp
             pass
+        pass
+    if hashTree is None:
+        hashTree = ET.SubElement(ht, "hashTree")
         pass
     return hashTree
 
@@ -114,7 +119,7 @@ def _createThreadGroup(jmx):
         loopController, "boolProp", name="LoopController.continue_forever"
     )
     p2.text = "false"
-    p3 = ET.SubElement(loopController, "stringProp", name="LoopController.loops")
+    p3 = ET.SubElement(loopController, "intProp", name="LoopController.loops")
     p3.text = "-1"
     p4 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.num_threads")
     p4.text = "1"
@@ -219,7 +224,10 @@ def _createCounterConfig(jmx):
 
 
 def _createVariableThroughputTimer(jmx):
-    hash = _getHashTree(jmx)
+    hash = jmx.find("hashTree")
+    for _ in range(2):
+        hash = hash.find("hashTree")
+        pass
 
     # Create the kg.apc.jmeter.timers.VariableThroughputTimer element
     timer = ET.SubElement(
@@ -235,7 +243,7 @@ def _createVariableThroughputTimer(jmx):
     loadProfile = ET.SubElement(timer, "collectionProp", name="load_profile")
 
     # Create the four collectionProp elements and add them as children to the load_profile element
-    for i in range(4):
+    for i in range(2):
         collectionProp = ET.SubElement(loadProfile, "collectionProp", name="")
         p1 = ET.SubElement(collectionProp, "stringProp", name="")
         p1.text = "10" if i == 0 else str(i * 10)
