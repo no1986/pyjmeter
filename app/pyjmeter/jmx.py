@@ -14,10 +14,10 @@ def printJMX(jmx):
     return
 
 
-def createJMX(hasCounter=True):
+def createJMX(domain, port, path, hasCounter=True):
     jmx = _createTestPlan()
     _createThreadGroup(jmx)
-    _createHTTPSampler(jmx, hasCounter)
+    _createHTTPSampler(jmx, domain, port, path, hasCounter)
     if hasCounter:
         _createCounterConfig(jmx)
         pass
@@ -27,7 +27,7 @@ def createJMX(hasCounter=True):
     return
 
 
-def getHashTree(jmx):
+def _getHashTree(jmx):
     ht = jmx.find("hashTree")
     if ht is None:
         hashTree = ET.SubElement(jmx, "hashTree")
@@ -45,7 +45,8 @@ def getHashTree(jmx):
 
 def _createTestPlan():
     jmx = ET.Element("jmeterTestPlan", version="1.2", properties="5.0", jmeter="5.5")
-    hash = getHashTree(jmx)
+    hash = _getHashTree(jmx)
+    tp = "TestPlan"
 
     # Create the Test Plan element
     testPlan = ET.SubElement(
@@ -58,90 +59,86 @@ def _createTestPlan():
     )
 
     # Add Test Plan element properties
-    prop1 = ET.SubElement(testPlan, "stringProp", name="TestPlan.comments")
-    prop2 = ET.SubElement(testPlan, "boolProp", name="TestPlan.functional_mode")
-    prop2.text = "false"
-    prop3 = ET.SubElement(testPlan, "boolProp", name="TestPlan.tearDown_on_shutdown")
-    prop3.text = "true"
-    prop4 = ET.SubElement(testPlan, "boolProp", name="TestPlan.serialize_threadgroups")
-    prop4.text = "false"
+    ET.SubElement(testPlan, "stringProp", name=f"{tp}.comments")
+    p2 = ET.SubElement(testPlan, "boolProp", name=f"{tp}.functional_mode")
+    p2.text = "false"
+    p3 = ET.SubElement(testPlan, "boolProp", name=f"{tp}.tearDown_on_shutdown")
+    p3.text = "true"
+    p4 = ET.SubElement(testPlan, "boolProp", name=f"{tp}.serialize_threadgroups")
+    p4.text = "false"
 
     # Create User Defined Variables element
     userDefinedVariables = ET.SubElement(
         testPlan,
         "elementProp",
-        name="TestPlan.user_defined_variables",
+        name=f"{tp}.user_defined_variables",
         elementType="Arguments",
         guiclass="ArgumentsPanel",
         testclass="Arguments",
         testname="User Defined Variables",
         enabled="true",
     )
-    collectionProp1 = ET.SubElement(
-        userDefinedVariables, "collectionProp", name="Arguments.arguments"
-    )
+    ET.SubElement(userDefinedVariables, "collectionProp", name="Arguments.arguments")
 
     # Create User Defined Classpath element
-    prop5 = ET.SubElement(testPlan, "stringProp", name="TestPlan.user_define_classpath")
+    ET.SubElement(testPlan, "stringProp", name=f"{tp}.user_define_classpath")
 
     return jmx
 
 
 def _createThreadGroup(jmx):
-    hash = getHashTree(jmx)
+    hash = _getHashTree(jmx)
+    tg = "ThreadGroup"
 
     threadGroup = ET.SubElement(
         hash,
-        "ThreadGroup",
+        tg,
         guiclass="ThreadGroupGui",
-        testclass="ThreadGroup",
+        testclass=tg,
         testname="Test Thread Group",
         enabled="true",
     )
-    Prop6 = ET.SubElement(threadGroup, "stringProp", name="ThreadGroup.on_sample_error")
-    Prop6.text = "continue"
+    p1 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.on_sample_error")
+    p1.text = "continue"
     loopController = ET.SubElement(
         threadGroup,
         "elementProp",
-        name="ThreadGroup.main_controller",
+        name=f"{tg}.main_controller",
         elementType="LoopController",
         guiclass="LoopControlPanel",
         testclass="LoopController",
         testname="Loop Controller",
         enabled="true",
     )
-    boolProp1 = ET.SubElement(
+    p2 = ET.SubElement(
         loopController, "boolProp", name="LoopController.continue_forever"
     )
-    boolProp1.text = "false"
-    stringProp7 = ET.SubElement(
-        loopController, "stringProp", name="LoopController.loops"
+    p2.text = "false"
+    p3 = ET.SubElement(loopController, "stringProp", name="LoopController.loops")
+    p3.text = "-1"
+    p4 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.num_threads")
+    p4.text = "1"
+    p5 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.ramp_time")
+    p5.text = "1"
+    p6 = ET.SubElement(threadGroup, "boolProp", name=f"{tg}.scheduler")
+    p6.text = "false"
+    p7 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.duration")
+    p7.text = ""
+    p8 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.delay")
+    p8.text = ""
+    p9 = ET.SubElement(
+        threadGroup, "boolProp", name=f"{tg}.same_user_on_next_iteration"
     )
-    stringProp7.text = "1"
-    stringProp8 = ET.SubElement(
-        threadGroup, "stringProp", name="ThreadGroup.num_threads"
-    )
-    stringProp8.text = "10"
-    stringProp9 = ET.SubElement(threadGroup, "stringProp", name="ThreadGroup.ramp_time")
-    stringProp9.text = "10"
-    boolProp2 = ET.SubElement(threadGroup, "boolProp", name="ThreadGroup.scheduler")
-    boolProp2.text = "false"
-    stringProp10 = ET.SubElement(threadGroup, "stringProp", name="ThreadGroup.duration")
-    stringProp10.text = ""
-    stringProp11 = ET.SubElement(threadGroup, "stringProp", name="ThreadGroup.delay")
-    stringProp11.text = ""
-    boolProp3 = ET.SubElement(
-        threadGroup, "boolProp", name="ThreadGroup.same_user_on_next_iteration"
-    )
-    boolProp3.text = "true"
+    p9.text = "true"
     return
 
 
-def _createHTTPSampler(jmx, hasCounter):
-    hash = getHashTree(jmx)
+def _createHTTPSampler(jmx, domain, port, path, hasCounter=True):
+    hash = _getHashTree(jmx)
+    hs = "HTTPSampler"
 
     # Create the HTTPSamplerProxy element
-    httpSamplerProxy = ET.SubElement(
+    httpSampler = ET.SubElement(
         hash,
         "HTTPSamplerProxy",
         guiclass="HttpTestSampleGui",
@@ -152,70 +149,48 @@ def _createHTTPSampler(jmx, hasCounter):
 
     # Add child elements to the HTTPSamplerProxy element
     elementProp = ET.SubElement(
-        httpSamplerProxy,
+        httpSampler,
         "elementProp",
-        name="HTTPsampler.Arguments",
+        name=f"{hs}.Arguments",
         elementType="Arguments",
         guiclass="HTTPArgumentsPanel",
         testclass="Arguments",
         testname="User Defined Variables",
         enabled="true",
     )
-    collectionProp = ET.SubElement(
-        elementProp, "collectionProp", name="Arguments.arguments"
-    )
-    stringProp1 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.domain"
-    )
-    stringProp1.text = "${__P(domain)}"
-    stringProp2 = ET.SubElement(httpSamplerProxy, "stringProp", name="HTTPSampler.port")
-    stringProp2.text = "${__P(port)}"
-    stringProp3 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.protocol"
-    )
-    stringProp3.text = "http"
-    stringProp4 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.contentEncoding"
-    )
-    stringProp5 = ET.SubElement(httpSamplerProxy, "stringProp", name="HTTPSampler.path")
-    stringProp5.text = "${__P(path)}"
+    ET.SubElement(elementProp, "collectionProp", name="Arguments.arguments")
+    p1 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.domain")
+    p1.text = f"{domain}"
+    p2 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.port")
+    p2.text = f"{port}"
+    p3 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.protocol")
+    p3.text = "http"
+    ET.SubElement(httpSampler, "stringProp", name=f"{hs}.contentEncoding")
+    p5 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.path")
+    p5.text = f"{path}"
     if hasCounter:
-        stringProp5.text += "?serial=${serial_counter}"
+        p5.text += "?serial=${serial_counter}"
         pass
-    stringProp6 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.method"
-    )
-    stringProp6.text = "GET"
-    boolProp1 = ET.SubElement(
-        httpSamplerProxy, "boolProp", name="HTTPSampler.follow_redirects"
-    )
-    boolProp1.text = "true"
-    boolProp2 = ET.SubElement(
-        httpSamplerProxy, "boolProp", name="HTTPSampler.auto_redirects"
-    )
-    boolProp2.text = "false"
-    boolProp3 = ET.SubElement(
-        httpSamplerProxy, "boolProp", name="HTTPSampler.use_keepalive"
-    )
-    boolProp3.text = "true"
-    boolProp4 = ET.SubElement(
-        httpSamplerProxy, "boolProp", name="HTTPSampler.DO_MULTIPART_POST"
-    )
-    boolProp4.text = "false"
-    stringProp7 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.embedded_url_re"
-    )
-    stringProp8 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.connect_timeout"
-    )
-    stringProp9 = ET.SubElement(
-        httpSamplerProxy, "stringProp", name="HTTPSampler.response_timeout"
-    )
+
+    p6 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.method")
+    p6.text = "GET"
+    p7 = ET.SubElement(httpSampler, "boolProp", name=f"{hs}.follow_redirects")
+    p7.text = "true"
+    p8 = ET.SubElement(httpSampler, "boolProp", name=f"{hs}.auto_redirects")
+    p8.text = "false"
+    p9 = ET.SubElement(httpSampler, "boolProp", name=f"{hs}.use_keepalive")
+    p9.text = "true"
+    p10 = ET.SubElement(httpSampler, "boolProp", name=f"{hs}.DO_MULTIPART_POST")
+    p10.text = "false"
+    ET.SubElement(httpSampler, "stringProp", name=f"{hs}.embedded_url_re")
+    ET.SubElement(httpSampler, "stringProp", name=f"{hs}.connect_timeout")
+    ET.SubElement(httpSampler, "stringProp", name=f"{hs}.response_timeout")
     return
 
 
 def _createCounterConfig(jmx):
-    hash = getHashTree(jmx)
+    hash = _getHashTree(jmx)
+    cc = "CounterConfig"
 
     # Create the CounterConfig element
     counterConfig = ET.SubElement(
@@ -228,26 +203,23 @@ def _createCounterConfig(jmx):
     )
 
     # Add child elements to the CounterConfig element
-    stringProp1 = ET.SubElement(counterConfig, "stringProp", name="CounterConfig.start")
-    stringProp1.text = "1"
-    stringProp2 = ET.SubElement(counterConfig, "stringProp", name="CounterConfig.end")
-    stringProp2.text = "999999999"
-    stringProp3 = ET.SubElement(counterConfig, "stringProp", name="CounterConfig.incr")
-    stringProp3.text = "1"
-    stringProp4 = ET.SubElement(counterConfig, "stringProp", name="CounterConfig.name")
-    stringProp4.text = "serial_counter"
-    stringProp5 = ET.SubElement(
-        counterConfig, "stringProp", name="CounterConfig.format"
-    )
-    stringProp5.text = "000000000"
-    boolProp1 = ET.SubElement(counterConfig, "boolProp", name="CounterConfig.per_user")
-    boolProp1.text = "false"
-    stringProp6 = ET.SubElement(counterConfig, "stringProp", name="TestPlan.comments")
+    p1 = ET.SubElement(counterConfig, "stringProp", name=f"{cc}.start")
+    p1.text = "1"
+    p2 = ET.SubElement(counterConfig, "stringProp", name=f"{cc}.end")
+    p2.text = "999999999"
+    p3 = ET.SubElement(counterConfig, "stringProp", name=f"{cc}.incr")
+    p3.text = "1"
+    p4 = ET.SubElement(counterConfig, "stringProp", name=f"{cc}.name")
+    p4.text = "serial_counter"
+    p5 = ET.SubElement(counterConfig, "stringProp", name=f"{cc}.format")
+    p5.text = "000000000"
+    p6 = ET.SubElement(counterConfig, "boolProp", name=f"{cc}.per_user")
+    p6.text = "false"
     return
 
 
 def _createVariableThroughputTimer(jmx):
-    hash = getHashTree(jmx)
+    hash = _getHashTree(jmx)
 
     # Create the kg.apc.jmeter.timers.VariableThroughputTimer element
     timer = ET.SubElement(
@@ -265,11 +237,11 @@ def _createVariableThroughputTimer(jmx):
     # Create the four collectionProp elements and add them as children to the load_profile element
     for i in range(4):
         collectionProp = ET.SubElement(loadProfile, "collectionProp", name="")
-        stringProp1 = ET.SubElement(collectionProp, "stringProp", name="")
-        stringProp1.text = "10" if i == 0 else str(i * 10)
-        stringProp2 = ET.SubElement(collectionProp, "stringProp", name="")
-        stringProp2.text = str(i * 10 + 10)
-        stringProp3 = ET.SubElement(collectionProp, "stringProp", name="")
-        stringProp3.text = "1"
+        p1 = ET.SubElement(collectionProp, "stringProp", name="")
+        p1.text = "10" if i == 0 else str(i * 10)
+        p2 = ET.SubElement(collectionProp, "stringProp", name="")
+        p2.text = p1.text
+        p3 = ET.SubElement(collectionProp, "stringProp", name="")
+        p3.text = "2"
         pass
     return

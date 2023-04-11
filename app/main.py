@@ -1,8 +1,8 @@
-from python_jmeter.jmx import createJMX
+from pyjmeter.jmx import createJMX
 
 
 def main():
-    createJMX()
+    createJMX("192.168.159.100", "30080", "/")
     return
 
 
