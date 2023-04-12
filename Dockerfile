@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as builder
 
 ENV VER 5.5
 
@@ -11,3 +11,15 @@ ENV PATH $PATH:/opt/apache-jmeter-${VER}/bin
 RUN curl -O https://jmeter-plugins.org/files/packages/jpgc-tst-2.5.zip
 RUN apt-get install -y unzip
 RUN unzip jpgc-tst-2.5.zip -d /opt/apache-jmeter-${VER}
+
+FROM ubuntu:20.04
+
+ENV VER 5.5
+
+COPY --from=builder /opt/apache-jmeter-${VER} /opt/apache-jmeter-${VER}
+RUN apt-get update \
+    && apt-get install -y openjdk-8-jdk \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH $PATH:/opt/apache-jmeter-${VER}/bin
