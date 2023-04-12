@@ -1,0 +1,84 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jmeter-job
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: create-jmx
+        image: 10.0.100.112:5000/jmeter/jmx:0.0.1
+        command: ["python"]
+        args:
+        - "/app/main.py"
+        - "-c"
+        - "/app/config.yaml"
+        - "-l"
+        - "/app/load.csv"
+        - "-o"
+        - "/tmp/test.jmx"
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: main-py
+          mountPath: /app/main.py
+          subPath: main.py
+        - name: config-yaml
+          mountPath: /app/config.yaml
+          subPath: config.yaml
+        - name: load-csv
+          mountPath: /app/load.csv
+          subPath: load.csv
+      containers:
+      - name: jmeter-exe
+        image: 10.0.100.112:5000/jmeter/jmeter:0.0.1
+        command: ["jmeter"]
+        args:
+        - "-n"
+        - "-t"
+        - "/tmp/test.jmx"
+        - "-l"
+        - "/tmp/log.jtl"
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: jmeter-properties
+          mountPath: /opt/apache-jmeter-5.5/bin/jmeter.properties
+          subPath: jmeter.properties
+      - name: sidecar
+        image: busybox
+        args: ["sleep", "86000"]
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+      volumes:
+      - name: tmp-volume
+        emptyDir:
+          medium: Memory
+      - name: main-py
+        configMap:
+          name: main-py-map
+          items:
+          - key: main.py
+            path: main.py
+      - name: config-yaml
+        configMap:
+          name: config-yaml-map
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: load-csv
+        configMap:
+          name: load-csv-map
+          items:
+          - key: load.csv
+            path: load.csv
+      - name: jmeter-properties
+        configMap:
+          name: jmeter-properties-map
+          items:
+          - key: jmeter.properties
+            path: jmeter.properties

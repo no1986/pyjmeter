@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- namespace.yaml
+- job.yaml
+
+namespace: jmeter
+
+configMapGenerator:
+- name: main-py-map
+  files:
+  - conf/main.py
+- name: config-yaml-map
+  files:
+  - conf/config.yaml
+- name: load-csv-map
+  files:
+  - conf/load.csv
+- name: jmeter-properties-map
+  files:
+  - conf/jmeter.properties

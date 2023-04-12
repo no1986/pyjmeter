@@ -2,29 +2,36 @@ from xml.dom import minidom as md
 from xml.etree import ElementTree as ET
 
 
-def printJMX(jmx):
+def saveJMX(jmx, file_path):
     jmx = ET.tostring(jmx, encoding="UTF-8")
     jmx = md.parseString(jmx)
-    with open("test.jmx", "w") as f:
+    with open(file_path, "w") as f:
         jmx.writexml(f, encoding="utf-8", newl="\n", indent="", addindent="  ")
         pass
-    with open("test.jmx", "r") as f:
+    return
+
+
+def printJMX(jmx):
+    fn = "test.jmx"
+    saveJMX(jmx, fn)
+    with open(fn, "r") as f:
         print(f.read())
         pass
     return
 
 
-def createJMX(domain, port, path, hasCounter=True):
+def createJMX(domain, port, path, threads, load, file_path, hasCounter=True):
     jmx = _createTestPlan()
-    _createThreadGroup(jmx)
+    _createThreadGroup(jmx, threads)
     _createHTTPSampler(jmx, domain, port, path, hasCounter)
     if hasCounter:
         _createCounterConfig(jmx)
         pass
-    _createVariableThroughputTimer(jmx)
+    _createVariableThroughputTimer(jmx, load)
 
+    saveJMX(jmx, file_path)
     printJMX(jmx)
-    return
+    return jmx
 
 
 def _getHashTree(jmx, N=20):
@@ -34,7 +41,6 @@ def _getHashTree(jmx, N=20):
         hashTree = ET.SubElement(jmx, "hashTree")
     else:
         for i in range(N):
-            print(i)
             tmp = ht.find("hashTree")
             if tmp is None:
                 hashTree = ET.SubElement(ht, "hashTree")
@@ -91,7 +97,7 @@ def _createTestPlan():
     return jmx
 
 
-def _createThreadGroup(jmx):
+def _createThreadGroup(jmx, threads):
     hash = _getHashTree(jmx)
     tg = "ThreadGroup"
 
@@ -122,9 +128,9 @@ def _createThreadGroup(jmx):
     p3 = ET.SubElement(loopController, "intProp", name="LoopController.loops")
     p3.text = "-1"
     p4 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.num_threads")
-    p4.text = "1"
+    p4.text = str(threads)
     p5 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.ramp_time")
-    p5.text = "1"
+    p5.text = "0"
     p6 = ET.SubElement(threadGroup, "boolProp", name=f"{tg}.scheduler")
     p6.text = "false"
     p7 = ET.SubElement(threadGroup, "stringProp", name=f"{tg}.duration")
@@ -174,7 +180,11 @@ def _createHTTPSampler(jmx, domain, port, path, hasCounter=True):
     p5 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.path")
     p5.text = f"{path}"
     if hasCounter:
-        p5.text += "?serial=${serial_counter}"
+        if "?" in p5.text:
+            p5.text += "&serial=${serial_counter}"
+        else:
+            p5.text += "?serial=${serial_counter}"
+            pass
         pass
 
     p6 = ET.SubElement(httpSampler, "stringProp", name=f"{hs}.method")
@@ -223,7 +233,7 @@ def _createCounterConfig(jmx):
     return
 
 
-def _createVariableThroughputTimer(jmx):
+def _createVariableThroughputTimer(jmx, load):
     hash = jmx.find("hashTree")
     for _ in range(2):
         hash = hash.find("hashTree")
@@ -243,13 +253,13 @@ def _createVariableThroughputTimer(jmx):
     loadProfile = ET.SubElement(timer, "collectionProp", name="load_profile")
 
     # Create the four collectionProp elements and add them as children to the load_profile element
-    for i in range(2):
+    for _, s in load.iterrows():
         collectionProp = ET.SubElement(loadProfile, "collectionProp", name="")
         p1 = ET.SubElement(collectionProp, "stringProp", name="")
-        p1.text = "10" if i == 0 else str(i * 10)
+        p1.text = str(s.start)
         p2 = ET.SubElement(collectionProp, "stringProp", name="")
-        p2.text = p1.text
+        p2.text = str(s.end)
         p3 = ET.SubElement(collectionProp, "stringProp", name="")
-        p3.text = "2"
+        p3.text = str(s.duration)
         pass
     return

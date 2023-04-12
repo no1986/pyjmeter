@@ -1,12 +1,14 @@
 [tool.poetry]
-name = "pyjmeter"
+name = "pyjmx"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
-readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pandas = "^2.0.0"
+pyyaml = "^6.0"
+python-box = "^7.0.1"
 
 
 [tool.poetry.group.dev.dependencies]
