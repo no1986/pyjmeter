@@ -1,4 +1,4 @@
 domain: 172.16.40.2
 port: 31380
 path: /webapp/?N=1
-threads: 10
+threads: 1000

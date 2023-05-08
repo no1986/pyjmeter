@@ -3,6 +3,7 @@ kind: Job
 metadata:
   name: jmeter-job
 spec:
+  ttlSecondsAfterFinished: 60
   completions: 1
   parallelism: 1
   template:
@@ -42,18 +43,16 @@ spec:
         - "/tmp/test.jmx"
         - "-l"
         - "/tmp/log.jtl"
+        lifecycle:
+          preStop:
+            exec:
+              command: ["cat", "jmeter.log"]
         volumeMounts:
         - name: tmp-volume
           mountPath: /tmp
         - name: jmeter-properties
           mountPath: /opt/apache-jmeter-5.5/bin/jmeter.properties
           subPath: jmeter.properties
-      - name: sidecar
-        image: busybox
-        args: ["sleep", "86000"]
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
       volumes:
       - name: tmp-volume
         emptyDir:
